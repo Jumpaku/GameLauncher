@@ -1,14 +1,26 @@
 ﻿
-# include <Siv3D.hpp>
+#include<Siv3D.hpp>
+#include"PanelManager.h"
+
+
+
+
 
 void Main()
 {
-	const Font font(30);
+    PanelManager pm;
 
-	while (System::Update())
-	{
-		font(L"ようこそ、Siv3D の世界へ！").draw();
 
-		Circle(Mouse::Pos(), 50).draw({ 255, 0, 0, 127 });
-	}
+
+    
+    while (System::Update())
+    {
+
+        pm.updateAndDraw();
+
+        Println(pm.detectPanelPointing());
+
+
+        
+    }
 }
