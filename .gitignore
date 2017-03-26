@@ -318,5 +318,9 @@ __pycache__/
 *.xsd.cs
 
 
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
 GameLauncher/Engine/*
 GameLauncher/Example/*
