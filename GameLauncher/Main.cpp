@@ -3,9 +3,6 @@
 #include"PanelManager.h"
 
 
-
-
-
 void Main()
 {
     PanelManager pm;
@@ -18,7 +15,7 @@ void Main()
 
         pm.updateAndDraw();
 
-        Println(pm.detectPanelPointing());
+        //Println(pm.detectPanelPointing());
 
 
         

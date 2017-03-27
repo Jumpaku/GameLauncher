@@ -18,11 +18,11 @@ public:
         Panel(L"Asset/Title2.png"),
         Panel(L"Asset/Title3.png"),
         Panel(L"Asset/Title4.png"),
-        Panel(L"Asset/Title5.png"),
+        /*Panel(L"Asset/Title5.png"),
         Panel(L"Asset/Title6.png"),
         Panel(L"Asset/Title7.png"),
         Panel(L"Asset/Title8.png"),
-        Panel(L"Asset/Title9.png"),
+        Panel(L"Asset/Title9.png"),*/
     })
     {
         camera.lookat = { 0, 0, 1 };
