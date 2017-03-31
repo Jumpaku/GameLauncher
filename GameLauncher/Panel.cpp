@@ -63,11 +63,5 @@ void Panel::updateAndDraw(double t)
     }, plane_.size, Quaternion::Pitch(-Pi / 2).yaw(
         angle(t)
     ));
-    Println(alpha(t));
     plane_.drawForward(texture_, AlphaF(alpha(t)));
-}
-
-Optional<Vec3> Panel::isPointed() const
-{
-    return Mouse::Ray().intersectsAt(plane_);
 }

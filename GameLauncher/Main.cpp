@@ -6,18 +6,8 @@
 void Main()
 {
     PanelManager pm;
-
-
-
-    
-    while (System::Update())
-    {
-
+    while (System::Update()) {
+        ClearPrint();
         pm.updateAndDraw();
-
-        //Println(pm.detectPanelPointing());
-
-
-        
     }
 }
