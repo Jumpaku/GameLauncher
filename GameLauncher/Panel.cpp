@@ -13,7 +13,47 @@ Plane Panel::getPlane() const
     return plane_;
 }
 
-double Panel::x(double t) const
+void Panel::update()
+{
+    switch (getState()) {
+    case State::LEFT:
+        if (isMouseOver() && !Input::MouseL.pressed) {
+            setState(State::OVER);
+        }
+        break;
+    case State::OVER:
+        if (Input::MouseL.pressed) {
+            setState(State::PRESSED);
+        }
+        else if (!isMouseOver()) {
+            setState(State::LEFT);
+        }
+        break;
+    case State::PRESSED:
+        if (Input::MouseL.pressed && Math::Abs(Mouse::DeltaF().x) > 1) {
+            setState(State::DRAGGED);
+        }
+        else if (Input::MouseL.released) {
+            setState(State::RELEASED);
+        }
+        break;
+    case State::DRAGGED:
+        if (Input::MouseL.released) {
+            setState(State::DROPPED);
+        }
+        break;
+    case State::DROPPED:
+        setState(State::LEFT);
+        break;
+    case State::RELEASED:
+        setState(State::OVER);
+        break;
+    default:
+        break;
+    }
+}
+
+double Panel::x(double t) 
 {
     double a = 4;
     double b = width / 2;
@@ -21,7 +61,7 @@ double Panel::x(double t) const
     return b*(2 / (1 + Math::Exp(-a*t)) - 1) + c;
 }
 
-double Panel::y(double t) const
+double Panel::y(double t) 
 {
     double a = Pi / 2;
     double b = 10;
@@ -29,7 +69,7 @@ double Panel::y(double t) const
     return b*Math::Cos(a*t)*Math::Cos(a*t) + c;
 }
 
-double Panel::z(double t) const
+double Panel::z(double t) 
 {
     double a = 20;
     double b = depth;
@@ -37,7 +77,7 @@ double Panel::z(double t) const
     return b * (-2 / (Math::Exp(a * t) + Math::Exp(-a * t)) + 1) + c;
 }
 
-double Panel::angle(double t) const
+double Panel::angle(double t) 
 {
     double a = 1;
     double b = Pi / 2 * 1.15;
@@ -46,11 +86,11 @@ double Panel::angle(double t) const
     return b*((t < 0) ? -Math::Sqrt(1 - (t + 1)*(t + 1)) : Math::Sqrt(1 - (t - 1)*(t - 1))) + c;
 }
 
-double Panel::alpha(double t) const
+double Panel::alpha(double t) 
 {
     double a = 15;
-    double b = 0.7;
-    double c = 0.3;
+    double b = 0.3;
+    double c = 0.7;
     return b * 2 / (Math::Exp(a * t) + Math::Exp(-a * t)) + c;
 }
 

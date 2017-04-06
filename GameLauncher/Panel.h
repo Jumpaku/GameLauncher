@@ -87,7 +87,7 @@ private:
 
     State state = LEFT;
 
-    bool selected = false;
+    bool isTop_ = false;
 
     bool mouseOver = false;
 public:
@@ -101,60 +101,61 @@ public:
     bool isMouseOver() const { return mouseOver; }
     void setMouseOver(bool mouseOver) { this->mouseOver = mouseOver; }
 
-    bool isSelected()const { return selected; }
-    void setSelected(bool selected) { this->selected = selected; }
-
-    void update()
+    bool isTop()const { return isTop_; }
+    void setIsTop(bool selected) { this->isTop_ = selected; }
+    
+    static void transition(
+        std::shared_ptr<Panel> p, bool mouseOver, bool pressed, bool moved)
     {
-        switch (getState()) {
-        case State::LEFT:
-            if (isMouseOver() && !Input::MouseL.pressed) {
-                setState(State::OVER);
+        switch (p->getState()) {
+        case Panel::LEFT:
+            if (mouseOver && !pressed) {
+                p->setState(Panel::OVER);
             }
             break;
-        case State::OVER:
-            if (Input::MouseL.pressed) {
-                setState(State::PRESSED);
+        case Panel::OVER:
+            if (pressed) {
+                p->setState(Panel::PRESSED);
             }
-            else if (!isMouseOver()) {
-                setState(State::LEFT);
-            }
-            break;
-        case State::PRESSED:
-            if (Input::MouseL.pressed && Math::Abs(Mouse::DeltaF().x) > 1) {
-                setState(State::DRAGGED);
-            }
-            else if (Input::MouseL.released) {
-                setState(State::RELEASED);
+            else if (!mouseOver) {
+                p->setState(Panel::LEFT);
             }
             break;
-        case State::DRAGGED:
-            if (Input::MouseL.released) {
-                setState(State::DROPPED);
+        case Panel::PRESSED:
+            if (pressed && moved) {
+                p->setState(Panel::DRAGGED);
+            }
+            else if (!pressed) {
+                p->setState(Panel::RELEASED);
             }
             break;
-        case State::DROPPED:
-            setState(State::LEFT);
+        case Panel::DRAGGED:
+            if (!pressed) {
+                p->setState(Panel::DROPPED);
+            }
             break;
-        case State::RELEASED:
-            setState(State::OVER);
+        case Panel::DROPPED:
+            p->setState(Panel::LEFT);
+            break;
+        case Panel::RELEASED:
+            p->setState(Panel::OVER);
             break;
         default:
             break;
         }
     }
 
+    void update();
 
+    static double x(double t);
 
-    double x(double t)const;
+    static double y(double t);
 
-    double y(double t)const;
+    static double z(double t);
 
-    double z(double t)const;
+    static double angle(double t);
 
-    double angle(double t) const;
-
-    double alpha(double t) const;
+    static double alpha(double t);
 
     void updateAndDraw(double t);
 };

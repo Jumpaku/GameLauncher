@@ -8,6 +8,7 @@ void Main()
     PanelManager pm;
     while (System::Update()) {
         ClearPrint();
-        pm.updateAndDraw();
+        pm.update();
+        pm.draw();
     }
 }
