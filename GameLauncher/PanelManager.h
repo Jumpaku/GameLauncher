@@ -7,19 +7,40 @@
 class PanelManager
 {
 public:
-    enum State
+    enum class State
     {
-        INIT,
-        DRAG,
-        ANIME,
-        DONE,
+        INITIAL,
+        DRAG_ROTATE,
+        ROTATE_DROPPED,
+        ROTATE_CLICKED,
+        ANIME_ROTATE,
+        FIRE_EVENT,
     };
 
-    struct AnimeInfo
+    class Animation
     {
-        double beginParam;
-        double endParam;
-        bool continues;
+        double const begin;
+        double const end;
+        Stopwatch timer;
+        bool flgFinished = false;
+    public:
+        Animation(double begin, double end)
+            :begin(begin), end(end)
+        {
+            timer.start();
+        }
+        
+        double getParameter()
+        {
+            double time = Min(1.0, timer.ms() / Math::Abs(begin - end) / 200);
+            flgFinished = time >= 1.0;
+            return EaseInOut(begin, end, Easing::Sine, time);
+        }
+        
+        bool hasFinished()const
+        {
+            return flgFinished;
+        }
     };
 
 private:
@@ -29,13 +50,11 @@ private:
     
     double parameter = 0;
 
-    State state = INIT;
+    State state = State::INITIAL;
 
-    Stopwatch animeStopWatch;
+    Optional<Animation> animation;
 
-    AnimeInfo animeInfo;
-
-    std::function<void(int)> const onSelected = [](int i) {Print(L"launch ", i);};
+    std::function<void(int)> onSelected = [](int i) {Print(L"launch ", i);};
 
 public:
     PanelManager()
@@ -53,17 +72,61 @@ public:
     State getState()const { return state; }
     void setState(State state) { this->state = state; }
 
-    void setIfTopMouseOver();
-    
-    void setCenterSelected();
+    void updatePanels();
     
     void startAnimation(int index);
 
-    void continueAnimation();
+    static State transition(
+        PanelManager::State state, Panel::State anyPanelState, Panel::State centerPanelState, Optional<Animation> const &animation);
 
-    void fireOnSelected()const;
+    std::vector<Plane> makePlanes()const
+    {
+        std::vector<Plane> planes(panels.size());
+        for (int i = 0; i < panels.size(); ++i) {
+            planes[i] = panels[i]->makePlane(getParamOfIndex(i));
+        }
+        return planes;
+    }
 
-    void updateState();
+    Panel::State checkAnyPanelState()const
+    {
+        if (std::any_of(panels.begin(), panels.end(), [](auto p) {
+            return p->getState() == Panel::State::DRAGGED;
+        }))
+        {
+            return Panel::State::DRAGGED;
+        }
+        else if (std::any_of(panels.begin(), panels.end(), [](auto p) {
+            return p->getState() == Panel::State::DROPPED;
+        }))
+        {
+            return Panel::State::DROPPED;
+        }
+        else if (std::any_of(panels.begin(), panels.end(), [](auto p) {
+            return p->getState() == Panel::State::RELEASED;
+        }))
+        {
+            return Panel::State::RELEASED;
+        }
+        else if (std::any_of(panels.begin(), panels.end(), [](auto p) {
+            return p->getState() == Panel::State::RELEASED;
+        }))
+        {
+            return Panel::State::RELEASED;
+        }
+        else {
+            return Panel::State::LEFT;
+        }
+    }
+
+    int getCenterIndex()const
+    {
+        auto planes = makePlanes();
+        auto itr = std::min_element(planes.begin(), planes.end(), [](auto const &a, auto const &b) {
+            return Math::Abs(a.x) < Math::Abs(b.x);
+        });
+        return itr - planes.begin();
+    }
 
     void update();
    
@@ -79,14 +142,10 @@ public:
         return index * 2.0 / n;
     }
 
-    /*const &Panel getTop()const
+    double getParamOfIndex(int index)const
     {
-        auto center = std::min_element(panels.begin(), panels.end(), [](auto p0, auto p1)->bool {
-            return Math::Abs(p0->getPlane().x) < Math::Abs(p1->getPlane().x);
-        });
+        return clamp(parameter + delta(index, panels.size()));
+    }
 
-        return **center;
-    }*/
-    
     void draw()const;
 };

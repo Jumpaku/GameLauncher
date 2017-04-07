@@ -4,70 +4,10 @@
 #include<memory>
 #include<algorithm>
 
-/*class PanelView
-{
-    enum State
-    {
-        LEFT,
-        SELECTED,
-
-    };
-    enum PanelsState
-    {
-        STOPPING,
-        ROTATING,
-        SELECTED,
-    };
-    Texture const texture;
-    Size const size;
-public:
-    void setState(State state);
-    void renderPanel(Vec3 center, double theta, double alpha)const{
-        Plane(center, size, Quaternion::Pitch(-Pi / 2).yaw(theta))
-            .drawForward(texture, AlphaF(alpha));
-    }
-};
-
-class PanelMovement
-{
-    double const delta;
-    std::shared_ptr<PanelView> const view;
-public:
-    PanelMovement(std::shared_ptr<PanelView> view, int id, int n)
-        :view(view), delta((2.0*id) / n){}
-
-    double clamp(double t)const
-    {
-        return
-            t > 1 ? fmod(t + 1, 2.0) - 1 :
-            t < -1 ? fmod(t + 1, 2.0) + 1 :
-            t;
-    }
-    double delta(int index, int n)
-    {
-        return ;
-    }
-    double x(double t)const;
-
-    double y(double t)const;
-
-    double z(double t)const;
-
-    double angle(double t) const;
-
-    double alpha(double t) const;
-    void update(double parameter)
-    {
-        double t = clamp(parameter + delta);
-        view->renderPanel({ x(t), y(t), z(t) }, angle(t), alpha(t));
-    }
-
-};*/
-
 class Panel
 {
 public:
-    enum State
+    enum class State
     {
         LEFT,
         OVER,
@@ -81,81 +21,111 @@ public:
 
     static double const depth;
 private:
-    Plane plane_;
-    
     const Texture texture_;
 
-    State state = LEFT;
+    const Size size = { 128, 72 };
 
-    bool isTop_ = false;
-
-    bool mouseOver = false;
+    State state = State::LEFT;
 public:
     Panel(String file);
-
-    Plane getPlane()const;
 
     State getState() const { return state; }
     void setState(State state) { this->state = state; }
 
-    bool isMouseOver() const { return mouseOver; }
-    void setMouseOver(bool mouseOver) { this->mouseOver = mouseOver; }
-
-    bool isTop()const { return isTop_; }
-    void setIsTop(bool selected) { this->isTop_ = selected; }
-    
-    static void transition(
-        std::shared_ptr<Panel> p, bool mouseOver, bool pressed, bool moved)
+    static State transition(
+        State const state, bool const mouseOver, bool const pressed, bool const moved)
     {
-        switch (p->getState()) {
-        case Panel::LEFT:
+        switch (state) {
+        case State::LEFT:
             if (mouseOver && !pressed) {
-                p->setState(Panel::OVER);
+                return State::OVER;
             }
             break;
-        case Panel::OVER:
+        case State::OVER:
             if (pressed) {
-                p->setState(Panel::PRESSED);
+                return State::PRESSED;
             }
             else if (!mouseOver) {
-                p->setState(Panel::LEFT);
+                return State::LEFT;
             }
             break;
-        case Panel::PRESSED:
+        case State::PRESSED:
             if (pressed && moved) {
-                p->setState(Panel::DRAGGED);
+                return State::DRAGGED;
             }
             else if (!pressed) {
-                p->setState(Panel::RELEASED);
+                return State::RELEASED;
             }
             break;
-        case Panel::DRAGGED:
+        case State::DRAGGED:
             if (!pressed) {
-                p->setState(Panel::DROPPED);
+                return State::DROPPED;
             }
             break;
-        case Panel::DROPPED:
-            p->setState(Panel::LEFT);
+        case State::DROPPED:
+            return State::LEFT;
             break;
-        case Panel::RELEASED:
-            p->setState(Panel::OVER);
+        case State::RELEASED:
+            return State::OVER;
             break;
         default:
             break;
         }
+        return state;
     }
 
-    void update();
 
-    static double x(double t);
+    Plane makePlane(double t)const
+    {
+        return Plane({
+            computeX(t)
+            , computeY(t)
+            , computeZ(t)
+        }, size, Quaternion::Pitch(-Pi / 2).yaw(
+            computeAngle(t)
+        ));
+    }
 
-    static double y(double t);
+    static double computeX(double t)
+    {
+        double a = 4;
+        double b = width / 2;
+        double c = 0;
+        return b*(2 / (1 + Math::Exp(-a*t)) - 1) + c;
+    }
 
-    static double z(double t);
+    static double computeY(double t)
+    {
+        double a = Pi / 2;
+        double b = 10;
+        double c = -10;
+        return b*Math::Cos(a*t)*Math::Cos(a*t) + c;
+    }
 
-    static double angle(double t);
+    static double computeZ(double t)
+    {
+        double a = 20;
+        double b = depth;
+        double c = -depth;
+        return b * (-2 / (Math::Exp(a * t) + Math::Exp(-a * t)) + 1) + c;
+    }
 
-    static double alpha(double t);
+    static double computeAngle(double t)
+    {
+        double a = 1;
+        double b = Pi / 2 * 1.15;
+        double c = 0;
+        t = t*a;
+        return b*((t < 0) ? -Math::Sqrt(1 - (t + 1)*(t + 1)) : Math::Sqrt(1 - (t - 1)*(t - 1))) + c;
+    }
 
-    void updateAndDraw(double t);
+    static double computeAlpha(double t)
+    {
+        double a = 15;
+        double b = 0.3;
+        double c = 0.7;
+        return b * 2 / (Math::Exp(a * t) + Math::Exp(-a * t)) + c;
+    }
+
+    void draw(double t)const;
 };
