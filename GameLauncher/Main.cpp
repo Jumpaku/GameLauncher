@@ -1,14 +1,13 @@
 ﻿
 #include<Siv3D.hpp>
-#include"PanelManager.h"
+#include"PanelSelector.h"
 
 
 void Main()
 {
-    PanelManager pm;
+    PanelSelector selector;
     while (System::Update()) {
-        ClearPrint();
-        pm.update();
-        pm.draw();
+        selector.update();
+        selector.draw();
     }
 }

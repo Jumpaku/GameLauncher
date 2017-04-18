@@ -1,6 +1,6 @@
-#include "PanelManager.h"
+#include "PanelSelector.h"
 
-void PanelManager::updatePanels()
+void PanelSelector::updatePanels()
 {
     auto planes = makePlanes();
 
@@ -30,7 +30,7 @@ void PanelManager::updatePanels()
     };
 }
 
-void PanelManager::startAnimation(int index)
+void PanelSelector::startAnimation(int index)
 {
     animation.emplace(Animation{
         parameter,
@@ -38,8 +38,8 @@ void PanelManager::startAnimation(int index)
     });
 }
 
-PanelManager::State PanelManager::transition(
-    PanelManager::State state, Panel::State anyPanelState, Panel::State centerPanelState, Optional<Animation> const &animation)
+PanelSelector::State PanelSelector::transition(
+    PanelSelector::State state, Panel::State anyPanelState, Panel::State centerPanelState, Optional<Animation> const &animation)
 {
     switch (state) {
     case State::INITIAL:
@@ -77,7 +77,52 @@ PanelManager::State PanelManager::transition(
     return state;
 }
 
-void PanelManager::update()
+std::vector<Plane> PanelSelector::makePlanes() const
+{
+    std::vector<Plane> planes(panels.size());
+    for (int i = 0; i < panels.size(); ++i) {
+        planes[i] = panels[i]->makePlane(getParamOfIndex(i));
+    }
+    return planes;
+}
+
+Panel::State PanelSelector::checkAnyPanelState() const
+{
+    if (std::any_of(panels.begin(), panels.end(), [](auto p) {
+        return p->getState() == Panel::State::DRAGGED;
+    })) {
+        return Panel::State::DRAGGED;
+    }
+    else if (std::any_of(panels.begin(), panels.end(), [](auto p) {
+        return p->getState() == Panel::State::DROPPED;
+    })) {
+        return Panel::State::DROPPED;
+    }
+    else if (std::any_of(panels.begin(), panels.end(), [](auto p) {
+        return p->getState() == Panel::State::RELEASED;
+    })) {
+        return Panel::State::RELEASED;
+    }
+    else if (std::any_of(panels.begin(), panels.end(), [](auto p) {
+        return p->getState() == Panel::State::RELEASED;
+    })) {
+        return Panel::State::RELEASED;
+    }
+    else {
+        return Panel::State::LEFT;
+    }
+}
+
+int PanelSelector::getCenterIndex() const
+{
+    auto planes = makePlanes();
+    auto itr = std::min_element(planes.begin(), planes.end(), [](auto const &a, auto const &b) {
+        return Math::Abs(a.x) < Math::Abs(b.x);
+    });
+    return itr - planes.begin();
+}
+
+void PanelSelector::update()
 {
     updatePanels();
     state = transition(state,
@@ -86,13 +131,13 @@ void PanelManager::update()
         animation);
 
     switch (state) {
-    case PanelManager::State::INITIAL:
+    case PanelSelector::State::INITIAL:
         animation = none;
         break;
-    case PanelManager::State::DRAG_ROTATE:
-        parameter += Mouse::DeltaF().x / Panel::width;
+    case PanelSelector::State::DRAG_ROTATE:
+        parameter += Mouse::DeltaF().x / Panel::WIDTH;
         break;
-    case PanelManager::State::ROTATE_DROPPED: {
+    case PanelSelector::State::ROTATE_DROPPED: {
         auto planes = makePlanes();
         auto center = std::min_element(planes.begin(), planes.end(), [](auto const &p0, auto const &p1)->bool {
             return Abs(p0.x) < Abs(p1.x);
@@ -100,17 +145,17 @@ void PanelManager::update()
         startAnimation(center - planes.begin());
         break;
     }
-    case PanelManager::State::ROTATE_CLICKED: {
+    case PanelSelector::State::ROTATE_CLICKED: {
         auto clicked = std::find_if(panels.begin(), panels.end(), [](auto p)->bool {
             return p->getState() == Panel::State::RELEASED;
         });
         startAnimation(clicked - panels.begin());
         break;
     }
-    case PanelManager::State::ANIME_ROTATE:
+    case PanelSelector::State::ANIME_ROTATE:
         parameter = animation->getParameter();
         break;
-    case PanelManager::State::FIRE_EVENT:
+    case PanelSelector::State::FIRE_EVENT:
         onSelected(getCenterIndex());
         break;
     default:
@@ -118,11 +163,11 @@ void PanelManager::update()
     }
 }
 
-void PanelManager::draw()const
+void PanelSelector::draw()const
 {
     Graphics3D::SetCamera(camera);
 
-    Print(L"" , static_cast<int>(state));
+    //Print(L"" , static_cast<int>(state));
 
     for (int i = 0; i < panels.size(); ++i) {
         panels[i]->draw(getParamOfIndex(i));

@@ -17,62 +17,23 @@ public:
         RELEASED,
     };
 
-    static double const width;
+    static double const WIDTH;
 
-    static double const depth;
+    static double const DEPTH;
 private:
-    const Texture texture_;
+    const Texture texture;
 
-    const Size size = { 128, 72 };
+    const Size size;
 
     State state = State::LEFT;
 public:
-    Panel(String file);
+    Panel(String file, Size size);
 
     State getState() const { return state; }
     void setState(State state) { this->state = state; }
 
     static State transition(
-        State const state, bool const mouseOver, bool const pressed, bool const moved)
-    {
-        switch (state) {
-        case State::LEFT:
-            if (mouseOver && !pressed) {
-                return State::OVER;
-            }
-            break;
-        case State::OVER:
-            if (pressed) {
-                return State::PRESSED;
-            }
-            else if (!mouseOver) {
-                return State::LEFT;
-            }
-            break;
-        case State::PRESSED:
-            if (pressed && moved) {
-                return State::DRAGGED;
-            }
-            else if (!pressed) {
-                return State::RELEASED;
-            }
-            break;
-        case State::DRAGGED:
-            if (!pressed) {
-                return State::DROPPED;
-            }
-            break;
-        case State::DROPPED:
-            return State::LEFT;
-            break;
-        case State::RELEASED:
-            return State::OVER;
-            break;
-        default:
-            break;
-        }
-        return state;
-    }
+        State const state, bool const mouseOver, bool const pressed, bool const moved);
 
 
     Plane makePlane(double t)const
@@ -89,7 +50,7 @@ public:
     static double computeX(double t)
     {
         double a = 4;
-        double b = width / 2;
+        double b = WIDTH / 2;
         double c = 0;
         return b*(2 / (1 + Math::Exp(-a*t)) - 1) + c;
     }
@@ -105,8 +66,8 @@ public:
     static double computeZ(double t)
     {
         double a = 20;
-        double b = depth;
-        double c = -depth;
+        double b = DEPTH;
+        double c = -DEPTH;
         return b * (-2 / (Math::Exp(a * t) + Math::Exp(-a * t)) + 1) + c;
     }
 
